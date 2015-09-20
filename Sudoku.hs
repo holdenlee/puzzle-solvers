@@ -35,13 +35,9 @@ import Debug.Trace
 import Utilities
 import Search
 
---type DS a = Seq.Seq (Seq.Seq a)
-
 type Coordinate = (Int, Int)
 
 type Board = [[[Int]]]
-
---basically graph structure
 
 data Group = Row | Col | Block deriving (Eq, Ord, Show)
 
@@ -68,16 +64,6 @@ type Sudoku = ConstraintProblem EntryIndex Int
 
 makeLenses ''ConstraintProblem
 
---for loop, with a change flag
-{-
-forC :: [a] -> (a -> Maybe b) -> (Bool, [b])
-forC li f =  case li of
-              [] -> (False, [])
-              x:rest ->
-                case f x of
-                 Nothing -> second (x:) $ mapChange rest
-                 Just y -> bimap (const True, (y:)) $ mapChange rest
--}
 filterC :: [a] -> (a -> Bool) -> (Bool, [a])
 filterC li f =  case li of
                  [] -> (False, [])
@@ -117,7 +103,10 @@ ac3' (pairs, cp) =
         then Nothing
         else ac3' (rest ++ map (to,) toNbrs,
                    cp & (possibs . at to) .~ (Just newToPossibs))
-      else ac3' (rest,cp) 
+      else ac3' (rest,cp)
+
+
+
 --show!
 ac3 :: (Ord a, Show a, Show i) => ConstraintProblem a i -> Maybe (ConstraintProblem a i)
 ac3 cp = 
@@ -129,7 +118,7 @@ ac3 cp =
     cp' = for vars cp (\v cp0 -> cp0 & possibs . at v %~ fmap (filter (fromMaybe (const True) $ M.lookup v u)))
   in
    runAC3 vars cp'
-   
+
 --show!
 runAC3 :: (Ord a, Show a, Show i) => [a] -> ConstraintProblem a i -> Maybe (ConstraintProblem a i)
 runAC3 vars cp =
@@ -141,7 +130,6 @@ runAC3 vars cp =
   in
    ac3' (worklist, cp) -- `debug` (show worklist)
 
---imperative style
 {-
 for :: [a] -> b -> (a -> b -> b) -> b
 for li x0 f = foldl (flip f) x0 li
@@ -158,12 +146,6 @@ nbrs x m =
   case M.lookup x m of
    Nothing -> []
    Just m2 -> M.keys m2
-
---type ConstraintSpreading = M.Map Coordinate [Coordinate]
-
---type ConstraintGraph = M.Map (Coordinate, Coordinate) (DS Bool)
-
---main = return ()
 
 subsetsOfSize :: Int -> [a] -> [[a]]
 subsetsOfSize k li = if k==0
@@ -216,10 +198,8 @@ addUnarys :: (Ord a) => [UnaryConstraint a i] -> ConstraintProblem a i -> Constr
 addUnarys li = unarys %~ (insertMultiple li)
 
 --unsafe version of at --show!
-
 at2 :: (Ord a, Show a) => a -> Lens' (M.Map a b) b
 at2 k = lens (lookup2 k) (flip $ M.insert k)
-
 
 --show!
 addBinarys :: (Ord a, Show a) => [BinaryConstraint a i] -> ConstraintProblem a i -> ConstraintProblem a i
@@ -296,7 +276,7 @@ childSudokus' c s = catMaybes . map (runAC3 [c]) $ splitOn c s
 isDone :: Sudoku -> Bool
 isDone = (all.all) ((==1).length) . sudokuToList
 
---assume not.isDone
+--assume not.isDone?
 childSudokus :: Sudoku -> [Sudoku]
 childSudokus s =
   let
@@ -316,8 +296,6 @@ main = time $ do
   str <- fileToString $ args !! 0
   let u = getUnary $ readSudoku $ lines str
   let s = initSudoku & addUnarys u
---  putStrLn $ showSudoku s 
---  let Just solved = solve s -- ac3 s
   let Just solved = solveD s 
   putStrLn $ showSudoku solved
 --  putStrLn $ showVerbose solved
@@ -345,3 +323,5 @@ s1' = readSudoku $ groupN 9 "8          36      7  9 2   5   7       457     1  
 s1 = initSudoku & addUnarys (getUnary s1')
 
 Just s2 = solve s1
+
+
