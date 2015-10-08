@@ -1,16 +1,6 @@
 {-# OPTIONS
  
- -XMultiParamTypeClasses
- -XFunctionalDependencies
- -XExistentialQuantification
- -XRank2Types
- -XFlexibleInstances
- -XFlexibleContexts
- -XTypeFamilies
-
 #-}
-
-{-# LANGUAGE TemplateHaskell #-}
 
 module AlphaBeta where
 import Data.Ord
@@ -37,17 +27,6 @@ instance (Ord a) => (Ord (WithInf a)) where
                (Inf, _) -> False
                (_, NegInf) -> False
                (_, Inf) -> True
-{-
-    compare x y = case (x,y) of
-                    (NegInf, NegInf) -> EQ
-                    (Inf, Inf) -> EQ
-                    (JustN x', JustN y') -> x == y'
-                    (NegInf, _) -> LT
-                    (Inf, _) -> GT
-                    (_, NegInf) -> GT
-                    (_, Inf) -> LT-}
-
---for :: [a] -> b -> (a -> b -> b) -> b
 
 --left-biased
 argmax :: (Ord a) => a -> a -> (Int, a)
@@ -64,18 +43,6 @@ argmin x y =
 
 for' :: (Monad m) => [a] -> b -> (a -> b -> m b) -> m b
 for' li x0 f = foldM (flip f) x0 li
-
-{-
---type Breakable a = Either a a
-data Breakable a = Breakable Bool a
---False means done
-
-instance Monad Breakable where
-    b@(Breakable False a) >>= _ = b
-    Breakable True a >>= f = f a
-
-evalB :: Breakable a -> a
-evalB (Breakable _ x) = x-}
 
 evalE :: Either a a -> a
 evalE (Left x) = x
@@ -110,13 +77,3 @@ alphaBeta children isTerminal heuristic cur depth a b isMax =
                         let indList1 = if j==2 then i0:li else indList0
                         let b1 = min b0 v1
                         (if b1 <= a then Left else Right) (i0+1, v1, b1, indList1))
-            
-                        
-                         
-                     
-
-{- undefined
-
-    where
-      f minOrMax aOrB
--}
